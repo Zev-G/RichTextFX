@@ -1987,12 +1987,6 @@ public class GenericStyledArea<PS, SEG, S> extends Region
 
             @Override
             public void dispose() {
-                box.highlightTextFillProperty().unbind();
-                box.wrapTextProperty().unbind();
-                box.graphicFactoryProperty().unbind();
-                box.graphicOffset.unbind();
-                box.dispose();
-
                 firstParPseudoClass.unsubscribe();
                 lastParPseudoClass.unsubscribe();
 
@@ -2000,11 +1994,42 @@ public class GenericStyledArea<PS, SEG, S> extends Region
                 hasCaretPseudoClass.unsubscribe();
 
                 selectionSubscription.unsubscribe();
+                box.dispose();
+            }
+
+            public void updateItem(Paragraph<PS, SEG, S> para) {
+                box.updateItem(para);
+            }
+
+            @Override
+            public boolean isReusable() {
+                /*
+                 *  Setting this to true will enable cell REUSE however it currently FAILS a number
+                 *  of test with Java 8 but only org.fxmisc.richtext.style.StylingTests with Java 9
+                 *  Strangely though simulating the StylingTests manually does work. This may have
+                 *  something to do with the caret not being placed/rendered sometimes.
+                 *  TODO Revisit once JRE 8 support is droppped.
+                 */
+                return reuseCells;
             }
         };
     }
 
-    /** Assumes this method is called within a {@link #suspendVisibleParsWhile(Runnable)} block */
+
+    private boolean reuseCells = true;
+    /**
+     *  Setting this to true will enable cell REUSE however it currently FAILS a number
+     *  of test with Java 8 but only org.fxmisc.richtext.style.StylingTests with Java 9.
+     *  Strangely though simulating the StylingTests manually does work. This may have
+     *  something to do with the caret not being placed/rendered sometimes.
+     *  TODO Revisit once JRE 8 support is droppped.
+     */
+    public void setReuseTextFlowCells( boolean val ) {
+        reuseCells = val;
+    }
+
+ 
+   /** Assumes this method is called within a {@link #suspendVisibleParsWhile(Runnable)} block */
     private void followCaret() {
         int parIdx = getCurrentParagraph();
         ParagraphBox<PS, SEG, S> paragrafBox = virtualFlow.getCell( parIdx ).getNode();
